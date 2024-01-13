@@ -31,17 +31,17 @@ const Home = () => {
   useEffect(() => {
     fetch("https://playground.4geeks.com/apis/fake/todos/user/liquidbacon", {
       method: "PUT",
-      body: JSON.stringify([{ label: "Make the bed", done: false },
-      { label: "Walk for an hour", done: false },
-      { label: "Do the homework", done: false }]),
+      body: JSON.stringify([{ label: "Hacer la comida", done: false },
+      { label: "Bajar al perro", done: false },
+      { label: "Hacer la tarea", done: false }]),
       headers: {
         "Content-Type": "application/json"
       }
     })
       .then(resp => {
-        console.log(resp.ok); // true if the response is successful
-        console.log(resp.status); // the status code (e.g., 200, 400, etc.)
-        console.log(resp.text()); // the response as text
+        console.log(resp.ok); 
+        console.log(resp.status);
+        console.log(resp.text()); 
       })
       .then(data => {
         console.log(data); // the object received from the server
@@ -49,7 +49,6 @@ const Home = () => {
       .catch(error => {
         console.log(error); // error handling
       });
-    // Fetch the initial to-do list from the API
     fetch("https://playground.4geeks.com/apis/fake/todos/user/liquidbacon")
       .then(resp => resp.json())
       .then(data => setTodos(data))
