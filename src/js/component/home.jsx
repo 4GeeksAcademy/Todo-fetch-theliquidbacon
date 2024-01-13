@@ -1,128 +1,109 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 
-const Home = () => {
-  const [inputValue, setInputValue] = useState("");
-  const [todos, setTodos] = useState([]);
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    // Update the API with the modified to-do list whenever todos change
-    fetch("https://playground.4geeks.com/apis/fake/todos/user/liquidbacon", {
-      method: "POST",
-      body: JSON.stringify([]),
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
-      .then(resp => {
-        console.log(resp.ok); // true if the response is successful
-        console.log(resp.status); // the status code (e.g., 200, 400, etc.)
-        console.log(resp.text()); // the response as text
-        return resp.json(); // parse the response as JSON and return a promise
-      })
-      .then(data => {
-        console.log(data); // the object received from the server
-      })
-      .catch(error => {
-        console.log(error); // error handling
-      });
-  }, []);
+export default function TodoList() {
+  const [tasks, setTasks] = useState([]);
+  const [taskInput, setTaskInput] = useState('');
+  const url = "https://playground.4geeks.com/apis/fake/todos/user/liquidbacon";
+  const inputRef = useRef(null);
 
   useEffect(() => {
-    fetch("https://playground.4geeks.com/apis/fake/todos/user/liquidbacon", {
-      method: "PUT",
-      body: JSON.stringify([{ label: "Hacer la comida", done: false },
-      { label: "Bajar al perro", done: false },
-      { label: "Hacer la tarea", done: false }]),
+    fetch(url, {
+      method: "POST", // post to create
       headers: {
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([])
     })
       .then(resp => {
-        console.log(resp.ok); 
-        console.log(resp.status);
-        console.log(resp.text()); 
+        if (resp.ok) {
+          return resp.json();
+        } else if (resp.status === 409 || resp.status === 400) {
+          return fetchData();
+        } else {
+          throw new Error("Error creating user " + resp.status);
+        }
       })
-      .then(data => {
-        console.log(data); // the object received from the server
-      })
-      .catch(error => {
-        console.log(error); // error handling
-      });
-    fetch("https://playground.4geeks.com/apis/fake/todos/user/liquidbacon")
-      .then(resp => resp.json())
-      .then(data => setTodos(data))
-      .catch(error => console.log(error));
+      .then(data => setTasks(data))
+      .catch(error => console.error("error creating user", error));
   }, []);
 
-  const addTodo = () => {
-    if (inputValue.trim() === "") return;
-
-    const newTodo = { label: inputValue, done: false };
-    setTodos([...todos, newTodo]);
-
-    setInputValue("");
-  };
-
-  const deleteTodo = index => {
-    const updatedTodos = todos.filter((_, currentIndex) => index !== currentIndex);
-    setTodos(updatedTodos);
-  };
-
-  const cleanAllTasks = () => {
-    fetch("https://playground.4geeks.com/apis/fake/todos/user/liquidbacon", {
-      method: "DELETE"
-    })
+  const fetchData = () => {
+    // Fetch info from user
+    fetch(url)
       .then(resp => resp.json())
-      .then(data => setTodos([]))
-      .catch(error => console.log(error));
+      .then(data => setTasks(data))
+      .catch(error => console.error(error));
+  };
+
+  const updateTaskList = (newTaskList) => {
+    setTasks(newTaskList);
+    fetch(url, {
+      method: "PUT", // post to create
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newTaskList)
+    })
+  };
+
+  const addTask = () => {
+    if (taskInput.trim() !== '') {
+      updateTaskList([...tasks, { label: taskInput, done: false }]);
+      setTaskInput('');
+      inputRef.current.focus();
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addTask();
+  };
+
+  const removeTask = (index) => {
+    updateTaskList(tasks.filter((_, i) => i !== index));
+  };
+
+  const clearAllTasks = () => {
+    updateTaskList([]);
   };
 
   return (
-    <div>
+    <div id='todo-list'>
       <h1>To do de Gabriel</h1>
-      <div className="container">
-        <div className="row">
-          <div className="col">
-            <ul className="list-group list-group-flush">
-              <li className="list-group-item">
-                <input
-                  type="text"
-                  onChange={(e) => setInputValue(e.target.value)}
-                  value={inputValue}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      addTodo();
-                    }
-                  }}
-                  placeholder="Añade una tarea"
-                />
-              </li>
-              {todos.map((item, index) => (
-                <li
-                  key={index}
-                  style={{ display: "flex", alignItems: "center" }}
-                  className="list-group-item"
-                >
-                  <span style={{ flexGrow: 1 }}>{item.label}</span>
-                  <i
-                    className="fas fa-times"
-                    onClick={() => deleteTodo(index)}
-                  ></i>
-                </li>
-              ))}
-              <div className="todosLeft">{todos.length} tareas restantes</div>
-              {todos.length > 0 && (
-                <button className="btn btn-secondary" onClick={cleanAllTasks}>
-                  Eliminar las tareas
-                </button>                
-              )}
-            </ul>
+      <form onSubmit={handleSubmit} className="task-form">
+        <input
+          type="text"
+          placeholder="Añadir una nueva tarea"
+          value={taskInput}
+          onChange={(e) => setTaskInput(e.target.value)}
+          ref={inputRef}
+        />
+        <button className="add-task-button" type="submit">Añadir Tarea</button>
+      </form>
+      <ul id="task-list" className='sidebar'>
+        {tasks && tasks.length === 0 ? (
+          <p id="no-tasks">No hay tareas, añade una</p>
+        ) : (
+          tasks && tasks.map((task, index) => (
+            <li key={index}>
+              <span>{task.label}</span>
+              <span className="delete-task" onClick={() => removeTask(index)}>
+                ❌
+              </span>
+            </li>
+          ))
+        )}
+      </ul>
+      <div className='item-count-and-clear'>
+        {tasks && tasks.length > 0 && (
+          <button onClick={clearAllTasks} className="clear-all-button">Eliminar todas las tareas</button>
+        )}
+        {tasks && tasks.length > 0 && (
+          <div className="item-count">
+            {tasks.length === 1 ? `1 item left` : `${tasks.length} tareas restantes`}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 }
-
-export default Home;
