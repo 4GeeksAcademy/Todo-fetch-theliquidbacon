@@ -100,7 +100,7 @@ export default function TodoList() {
         )}
         {tasks && tasks.length > 0 && (
           <div className="item-count">
-            {tasks.length === 1 ? `1 item left` : `${tasks.length} tareas restantes`}
+            {tasks.length === 1 ? `1 tareas restantes` : `${tasks.length} tareas restantes`}
           </div>
         )}
       </div>
